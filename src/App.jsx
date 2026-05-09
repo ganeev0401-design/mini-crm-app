@@ -1,59 +1,170 @@
 import { useEffect, useState } from "react"
+import { supabase } from "./supabase"
 
-export default function App() {
-  const [projects, setProjects] = useState([])
-
+function getUserId() {
   return (
-    <div style={{ padding: 20 }}>
-      <h1>📁 Мои проекты</h1>
-
-      <p>Mini App работает 🚀</p>
-    </div>
+    window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() ||
+    localStorage.getItem("mock_user")
   )
 }
 
-useEffect(() => {
-  const tg = window.Telegram?.WebApp
-  tg?.ready()
-}, [])
-
-//Загружаем проект
-import { useEffect, useState } from "react"
-import { supabase } from "./supabase"
-
 export default function App() {
   const [projects, setProjects] = useState([])
+  useEffect(() => {
+  localStorage.setItem("mock_user", "123")
+  }, [])
 
   useEffect(() => {
-    loadProjects()
+  const tg = window.Telegram?.WebApp
+  tg?.ready()
+
+  console.log("TG USER:", tg?.initDataUnsafe?.user)
+
+  loadProjects()
   }, [])
 
   async function loadProjects() {
-    const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+  const user = await getUser()
 
-    const { data } = await supabase
+  if (!user) return
+
+  const { data } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("telegram_id", user.telegram_id)
+
+  setProjects(data || [])
+  }
+
+  //Функция отправки InitData на сервер для проверки
+  async function getUser() {
+  const tg = window.Telegram.WebApp
+
+  const res = await fetch("http://localhost:3000/auth", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      initData: tg.initData
+    })
+  })
+
+  return await res.json()
+}
+
+  async function updateStatus(id, status) {
+    await supabase
       .from("projects")
-      .select("*")
-      .eq("user_id", userId?.toString())
+      .update({ status })
+      .eq("id", id)
 
-    setProjects(data || [])
+    loadProjects()
+  }
+  //Кнопока отметки оплаты
+  async function markPaid(id) {
+    await supabase
+      .from("projects")
+      .update({ paid: true, status: "done" })
+      .eq("id", id)
+
+    loadProjects()
+  }
+
+  const total = projects.reduce((sum, p) => {
+  const val = parseInt(p.budget)
+  return sum + (isNaN(val) ? 0 : val)
+  }, 0)
+
+  const paid = projects.reduce((sum, p) => {
+  const val = parseInt(p.budget)
+  if (p.paid) return sum + (isNaN(val) ? 0 : val)
+  return sum
+  }, 0)
+
+
+const pending = total - paid
+
+  const today = new Date()
+
+  const overdue = projects.filter(
+    (p) => new Date(p.deadline) < today && p.status !== "done"
+  )
+
+  const waiting = projects.filter(
+    (p) => p.status === "waiting_payment"
+  )
+
+  const active = projects.filter(
+    (p) => p.status === "active"
+  )
+
+  function renderProject(p, i) {
+    return (
+      <div
+        key={i}
+        style={{
+          border: "1px solid #ddd",
+          borderRadius: 10,
+          padding: 15,
+          marginBottom: 10
+        }}
+      >
+        <h3>{p.title}</h3>
+
+        <p>👤 {p.client_name}</p>
+        <p>💰 {p.budget}</p>
+        <p>📅 {p.deadline}</p>
+
+        <p>
+          📊 {p.status} | {p.paid ? "✅ Оплачено" : "❌ Не оплачено"}
+        </p>
+
+        <div style={{ marginTop: 10 }}>
+          <button onClick={() => updateStatus(p.id, "active")}>
+            В работе
+          </button>
+
+          <button onClick={() => updateStatus(p.id, "waiting_payment")}>
+            Ждём оплату
+          </button>
+
+          <button onClick={() => updateStatus(p.id, "done")}>
+            Завершено
+          </button>
+
+          {!p.paid && (
+            <button onClick={() => markPaid(p.id)}>
+              💸 Отметить оплачено
+            </button>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
     <div style={{ padding: 20 }}>
-      <h2>📁 Мои проекты</h2>
+      <div style={{ marginBottom: 20 }}>
+        <h2>💰 Деньги</h2>
+        <p>Всего: {total}</p>
+        <p>Получено: {paid}</p>
+        <p>В работе: {pending}</p>
+      </div>
 
-      {projects.length === 0 && <p>Пока нет проектов 🤷‍♂️</p>}
+      <h1>📁 Мои проекты</h1>
 
-      {projects.map((p, i) => (
-        <div key={i} style={{ border: "1px solid #ccc", margin: 10, padding: 10 }}>
-          <h3>{p.title}</h3>
-          <p>👤 {p.client_name}</p>
-          <p>💰 {p.budget}</p>
-          <p>📅 {p.deadline}</p>
-          <p>📊 {p.status}</p>
-        </div>
-      ))}
+      <h2>🔴 Просрочено</h2>
+      {overdue.length === 0 && <p>Нет просроченных</p>}
+      {overdue.map(renderProject)}
+
+      <h2>🟡 Ждут оплату</h2>
+      {waiting.length === 0 && <p>Нет</p>}
+      {waiting.map(renderProject)}
+
+      <h2>🟢 В работе</h2>
+      {active.length === 0 && <p>Нет</p>}
+      {active.map(renderProject)}
     </div>
   )
 }
