@@ -40,7 +40,7 @@ export default function App() {
   setProjects(data || [])
   }
 
-  console.log(window.Telegram?.WebApp?.initDataUnsafe?.user?.id)
+  //console.log(window.Telegram?.WebApp?.initDataUnsafe?.user?.id)
 
   //Функция отправки InitData на сервер для проверки
   async function getUser() {
