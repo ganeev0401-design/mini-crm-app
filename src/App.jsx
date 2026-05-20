@@ -40,7 +40,7 @@ export default function App() {
   async function getUser() {
   const tg = window.Telegram.WebApp
 
-  const res = await fetch("http://localhost:3000/auth", {
+  const res = await fetch("https://mini-crm-backend-5jsf.onrender.com", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
