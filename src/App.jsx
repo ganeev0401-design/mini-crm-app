@@ -40,18 +40,18 @@ export default function App() {
   async function getUser() {
   const tg = window.Telegram.WebApp
 
-  const res = await fetch("https://mini-crm-backend-5jsf.onrender.com", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      initData: tg.initData
-    })
+  const res = await fetch("https://mini-crm-backend-5jsf.onrender.com/auth", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    initData: tg.initData
+  })
   })
 
   return await res.json()
-}
+  }
 
   async function updateStatus(id, status) {
     await supabase
