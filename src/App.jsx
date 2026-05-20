@@ -20,7 +20,7 @@ export default function App() {
 
   console.log("TG USER:", tg?.initDataUnsafe?.user)
 
-  const [debugUser, setDebugUser] = useState(null)
+  //const [debugUser, setDebugUser] = useState(null)
 
   loadProjects()
   }, [])
