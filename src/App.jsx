@@ -32,10 +32,10 @@ export default function App() {
 
   if (!user) return
 
-  const { data } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("telegram_id", user.telegram_id)
+  // const { data } = await supabase
+  //   .from("projects")
+  //   .select("*")
+  //   .eq("telegram_id", user.telegram_id)
 
   setProjects(data || [])
   }
