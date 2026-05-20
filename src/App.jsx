@@ -36,11 +36,19 @@ export default function App() {
   setProjects(data || [])
   }
 
-  console.log(window.Telegram.WebApp.initDataUnsafe.user.id)
+  console.log(window.Telegram?.WebApp?.initDataUnsafe?.user?.id)
 
   //Функция отправки InitData на сервер для проверки
   async function getUser() {
-  const tg = window.Telegram.WebApp
+  const tg = window.Telegram?.WebApp
+
+  // 👉 если НЕ в Telegram — используем mock
+  if (!tg) {
+    return {
+      telegram_id: localStorage.getItem("mock_user") || "123",
+      name: "Test User"
+    }
+  }
 
   const res = await fetch("https://mini-crm-backend-5jsf.onrender.com/auth", {
     method: "POST",
@@ -57,7 +65,7 @@ export default function App() {
   console.log("AUTH RESPONSE:", data)
 
   return data
-  }
+}
 
 
   async function updateStatus(id, status) {
