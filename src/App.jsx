@@ -167,10 +167,11 @@ const pending = total - paid
   return (
     <div style={{ padding: 20 }}>
       {debugUser && (
-  <div style={{ background: "#eee", padding: 10, marginBottom: 10 }}>
-    DEBUG USER: {JSON.stringify(debugUser)}
-  </div>
-)}
+      <div style={{ background: "#eee", padding: 10, marginBottom: 10 }}>
+        DEBUG USER: {JSON.stringify(debugUser)}
+      </div>
+      )}
+      
       <div style={{ marginBottom: 20 }}>
         <h2>💰 Деньги</h2>
         <p>Всего: {total}</p>
