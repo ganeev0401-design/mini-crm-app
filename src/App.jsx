@@ -36,22 +36,29 @@ export default function App() {
   setProjects(data || [])
   }
 
+  console.log(window.Telegram.WebApp.initDataUnsafe.user.id)
+
   //Функция отправки InitData на сервер для проверки
   async function getUser() {
   const tg = window.Telegram.WebApp
 
   const res = await fetch("https://mini-crm-backend-5jsf.onrender.com/auth", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    initData: tg.initData
-  })
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      initData: tg.initData
+    })
   })
 
-  return await res.json()
+  const data = await res.json()
+
+  console.log("AUTH RESPONSE:", data)
+
+  return data
   }
+
 
   async function updateStatus(id, status) {
     await supabase
