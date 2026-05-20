@@ -20,6 +20,8 @@ export default function App() {
 
   console.log("TG USER:", tg?.initDataUnsafe?.user)
 
+  const [debugUser, setDebugUser] = useState(null)
+
   loadProjects()
   }, [])
 
@@ -27,6 +29,8 @@ export default function App() {
   const user = await getUser()
 
    console.log("USER FROM AUTH:", user)
+
+    setDebugUser(user)
 
   if (!user) return
 
@@ -162,6 +166,11 @@ const pending = total - paid
 
   return (
     <div style={{ padding: 20 }}>
+      {debugUser && (
+  <div style={{ background: "#eee", padding: 10, marginBottom: 10 }}>
+    DEBUG USER: {JSON.stringify(debugUser)}
+  </div>
+)}
       <div style={{ marginBottom: 20 }}>
         <h2>💰 Деньги</h2>
         <p>Всего: {total}</p>
