@@ -26,6 +26,8 @@ export default function App() {
   async function loadProjects() {
   const user = await getUser()
 
+   console.log("USER FROM AUTH:", user)
+
   if (!user) return
 
   const { data } = await supabase
