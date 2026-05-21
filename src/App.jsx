@@ -20,6 +20,9 @@ export default function App() {
 
   console.log("TG USER:", tg?.initDataUnsafe?.user)
 
+  console.log("ENV URL:", import.meta.env.VITE_SUPABASE_URL)
+  console.log("ENV KEY:", import.meta.env.VITE_SUPABASE_KEY)
+
   //const [debugUser, setDebugUser] = useState(null)
 
   loadProjects()
