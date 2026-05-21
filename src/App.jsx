@@ -23,7 +23,6 @@ export default function App() {
   console.log("ENV URL:", import.meta.env.VITE_SUPABASE_URL)
   console.log("ENV KEY:", import.meta.env.VITE_SUPABASE_KEY)
 
-  //const [debugUser, setDebugUser] = useState(null)
 
   loadProjects()
   }, [])
@@ -38,8 +37,7 @@ export default function App() {
   const { data } = await supabase
     .from("projects")
     .select("*")
-    //.eq("telegram_id", user.telegram_id)
-    .select("*")
+    .eq("telegram_id", user.telegram_id)
 
   setProjects(data || [])
   }
