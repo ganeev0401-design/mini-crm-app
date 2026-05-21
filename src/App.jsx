@@ -48,6 +48,11 @@ export default function App() {
   async function getUser() {
   const tg = window.Telegram?.WebApp
 
+const userId =
+  tg?.initDataUnsafe?.user?.id || "691710580" // твой ID вручную
+
+console.log("USER ID:", userId)
+
   // 👉 если НЕ в Telegram — используем mock
   if (!tg) {
     return {
