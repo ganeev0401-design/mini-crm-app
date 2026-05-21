@@ -90,7 +90,12 @@ export default function App() {
   async function markPaid(id) {
     await supabase
       .from("projects")
-      .update({ paid: true, status: "done" })
+      //.update({ paid: true, status: "done" })
+      update({
+        paid: true,
+        status: "done",
+        paid_at: new Date()
+        })
       .eq("id", id)
 
     loadProjects()
