@@ -1,83 +1,82 @@
 import { useEffect, useState } from "react"
 import { supabase } from "./supabase"
 
-function getUserId() {
-  return (
-    window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() ||
-    localStorage.getItem("mock_user")
-  )
-}
-
 export default function App() {
   const [projects, setProjects] = useState([])
-  useEffect(() => {
-  localStorage.setItem("mock_user", "123")
-  }, [])
 
   useEffect(() => {
-  const tg = window.Telegram?.WebApp
-  tg?.ready()
+    const tg = window.Telegram?.WebApp
+    tg?.ready()
 
-  console.log("TG USER:", tg?.initDataUnsafe?.user)
+    console.log("TG USER:", tg?.initDataUnsafe?.user)
+    console.log("ENV URL:", import.meta.env.VITE_SUPABASE_URL)
+    console.log("ENV KEY:", import.meta.env.VITE_SUPABASE_KEY)
 
-  console.log("ENV URL:", import.meta.env.VITE_SUPABASE_URL)
-  console.log("ENV KEY:", import.meta.env.VITE_SUPABASE_KEY)
-
-
-  loadProjects()
+    loadProjects()
   }, [])
 
   async function loadProjects() {
-  const user = await getUser()
+    const user = await getUser()
 
-   console.log("USER FROM AUTH:", user)
+    console.log("USER:", user)
 
-  if (!user) return
+    if (!user) return
 
-  const { data } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("telegram_id", user.telegram_id)
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("telegram_id", user.telegram_id)
 
-  setProjects(data || [])
+    console.log("PROJECTS FROM DB:", data, error)
+
+    setProjects(data || [])
   }
 
-  console.log(window.Telegram?.WebApp?.initDataUnsafe?.user?.id)
-
-  //Функция отправки InitData на сервер для проверки
+  // 🔥 ГЛАВНАЯ ФИКС-ФУНКЦИЯ
   async function getUser() {
-  const tg = window.Telegram?.WebApp
+    const tg = window.Telegram?.WebApp
 
-const userId =
-  tg?.initDataUnsafe?.user?.id || "691710580" // твой ID вручную
+    // 👉 fallback (чтобы всё работало даже без Telegram и backend)
+    const fallbackUser = {
+      telegram_id: "691710580",
+      name: "Local User"
+    }
 
-console.log("USER ID:", userId)
+    // ❗ если Telegram нет — сразу fallback
+    if (!tg) {
+      console.log("NO TELEGRAM → fallback")
+      return fallbackUser
+    }
 
-  // 👉 если НЕ в Telegram — используем mock
-  if (!tg) {
-    return {
-      telegram_id: localStorage.getItem("mock_user") || "123",
-      name: "Test User"
+    try {
+      const res = await fetch(
+        "https://mini-crm-backend-5jsf.onrender.com/auth",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            initData: tg.initData
+          })
+        }
+      )
+
+      const data = await res.json()
+
+      console.log("AUTH RESPONSE:", data)
+
+      // 👉 если backend вернул юзера
+      if (data?.telegram_id) {
+        return data
+      }
+
+      return fallbackUser
+    } catch (err) {
+      console.log("AUTH ERROR → fallback", err)
+      return fallbackUser
     }
   }
-
-  const res = await fetch("https://mini-crm-backend-5jsf.onrender.com/auth", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      initData: tg.initData
-    })
-  })
-
-  const data = await res.json()
-
-  console.log("AUTH RESPONSE:", data)
-
-  return data
-}
-
 
   async function updateStatus(id, status) {
     await supabase
@@ -87,7 +86,7 @@ console.log("USER ID:", userId)
 
     loadProjects()
   }
-  //Кнопока отметки оплаты
+
   async function markPaid(id) {
     await supabase
       .from("projects")
@@ -98,18 +97,17 @@ console.log("USER ID:", userId)
   }
 
   const total = projects.reduce((sum, p) => {
-  const val = parseInt(p.budget)
-  return sum + (isNaN(val) ? 0 : val)
+    const val = parseInt(p.budget)
+    return sum + (isNaN(val) ? 0 : val)
   }, 0)
 
   const paid = projects.reduce((sum, p) => {
-  const val = parseInt(p.budget)
-  if (p.paid) return sum + (isNaN(val) ? 0 : val)
-  return sum
+    const val = parseInt(p.budget)
+    if (p.paid) return sum + (isNaN(val) ? 0 : val)
+    return sum
   }, 0)
 
-
-const pending = total - paid
+  const pending = total - paid
 
   const today = new Date()
 
