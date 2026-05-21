@@ -116,7 +116,7 @@ export default function App() {
   const today = new Date()
 
   const overdue = projects.filter(
-    (p) => new Date(p.deadline) < today && p.status !== "done"
+    (p) => new Date(p.deadline) < today && p.status !== "✅ Оплачено"
   )
 
   const waiting = projects.filter(
@@ -157,7 +157,7 @@ export default function App() {
             Ждём оплату
           </button>
 
-          <button onClick={() => updateStatus(p.id, "done")}>
+          <button onClick={() => updateStatus(p.id, "✅ Оплачено")}>
             Завершено
           </button>
 
