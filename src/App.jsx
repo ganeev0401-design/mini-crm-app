@@ -5,7 +5,6 @@ export default function App() {
   const [projects, setProjects] = useState([])
   const [mode, setMode] = useState("crm")
 
-  // booking state
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [service, setService] = useState("")
@@ -66,39 +65,40 @@ export default function App() {
   }
 
   // =========================
-  // 📅 ГРУЗИМ ЗАНЯТЫЕ СЛОТЫ
+  // 📅 загрузка занятых слотов (ИСПРАВЛЕНО)
   // =========================
   async function loadBookedSlots(selectedDate) {
     setDate(selectedDate)
+    setSelectedTime("")
 
-    const start = new Date(selectedDate)
-    const end = new Date(selectedDate)
-    end.setDate(end.getDate() + 1)
+    const start = new Date(selectedDate + "T00:00:00")
+    const end = new Date(selectedDate + "T23:59:59")
 
     const { data } = await supabase
       .from("projects")
-      .select("*")
+      .select("appointment_at")
       .gte("appointment_at", start.toISOString())
-      .lt("appointment_at", end.toISOString())
+      .lte("appointment_at", end.toISOString())
 
     const busy = (data || []).map(p => {
       const d = new Date(p.appointment_at)
-      return d.toTimeString().slice(0,5)
+
+      const hours = String(d.getHours()).padStart(2, "0")
+      const minutes = String(d.getMinutes()).padStart(2, "0")
+
+      return `${hours}:${minutes}`
     })
 
     setBookedSlots(busy)
   }
 
-  // =========================
-  // 📌 BOOKING SUBMIT
-  // =========================
   async function submitBooking() {
     if (!selectedTime || !date) {
       alert("Выбери дату и время")
       return
     }
 
-    const datetime = new Date(`${date}T${selectedTime}`)
+    const datetime = new Date(`${date}T${selectedTime}:00`)
 
     await fetch(
       "https://mini-crm-backend-5jsf.onrender.com/create-booking",
@@ -115,12 +115,9 @@ export default function App() {
       }
     )
 
-    alert("Запись создана 🚀")
+    alert("Заявка отправлена 🚀")
   }
 
-  // =========================
-  // 📅 BOOKING UI
-  // =========================
   if (mode === "booking") {
     return (
       <div style={{ padding: 20 }}>
@@ -135,15 +132,11 @@ export default function App() {
         <input placeholder="Услуга" onChange={e => setService(e.target.value)} />
         <br /><br />
 
-        <input
-          type="date"
-          onChange={e => loadBookedSlots(e.target.value)}
-        />
+        <input type="date" onChange={e => loadBookedSlots(e.target.value)} />
         <br /><br />
 
-        {/* 🔥 СЛОТЫ */}
         {date && (
-          <div>
+          <>
             <h4>Выбери время:</h4>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
@@ -160,8 +153,9 @@ export default function App() {
                       background: isBusy
                         ? "#ddd"
                         : selectedTime === time
-                        ? "green"
-                        : "white"
+                        ? "#22c55e"
+                        : "white",
+                      cursor: isBusy ? "not-allowed" : "pointer"
                     }}
                   >
                     {time}
@@ -169,7 +163,7 @@ export default function App() {
                 )
               })}
             </div>
-          </div>
+          </>
         )}
 
         <br />
@@ -181,15 +175,11 @@ export default function App() {
     )
   }
 
-  // =========================
-  // 💻 CRM (без изменений)
-  // =========================
+  const total = projects.reduce((s, p) => s + Number(p.budget || 0), 0)
 
-  const total = projects.reduce((sum, p) => sum + Number(p.budget || 0), 0)
-
-  const paid = projects.reduce((sum, p) => {
-    if (p.paid) return sum + Number(p.budget || 0)
-    return sum
+  const paid = projects.reduce((s, p) => {
+    if (p.paid) return s + Number(p.budget || 0)
+    return s
   }, 0)
 
   const pending = total - paid
@@ -197,7 +187,7 @@ export default function App() {
   const today = new Date()
 
   const overdue = projects.filter(
-    p => new Date(p.deadline) < today && p.status !== "✅ Оплачено"
+    p => new Date(p.deadline) < today && p.status !== "done"
   )
 
   const waiting = projects.filter(p => p.status === "waiting_payment")
@@ -205,20 +195,12 @@ export default function App() {
 
   function renderProject(p, i) {
     return (
-      <div key={i} style={{
-        border: "1px solid #ddd",
-        borderRadius: 10,
-        padding: 15,
-        marginBottom: 10
-      }}>
+      <div key={i} style={{ border: "1px solid #ddd", padding: 10, marginBottom: 10 }}>
         <h3>{p.title}</h3>
         <p>👤 {p.client_name}</p>
         <p>💰 {p.budget}</p>
         <p>📅 {p.deadline}</p>
-
-        <p>
-          📊 {p.status} | {p.paid ? "✅ Оплачено" : "❌ Не оплачено"}
-        </p>
+        <p>{p.status}</p>
       </div>
     )
   }
